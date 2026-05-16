@@ -1584,10 +1584,11 @@
                 let url = `${API_CONFIG.baseUrl}/ews3/tasksinout/reportES/ESsearch.do?page=1&limit=9999`;
                 url += `&SYS_MODIFY_DATE_searchtype=BT&SYS_MODIFY_DATE=${encodeURIComponent(startStr)}&SYS_MODIFY_DATE2=${encodeURIComponent(endStr)}`;
                 
-                // 添加部门过滤
-                if (API_CONFIG.departmentFilter) {
-                    url += `&${encodeURIComponent(API_CONFIG.departmentFilter)}`;
-                }
+                // 添加部门过滤（如果需要可以启用）
+                // if (API_CONFIG.departmentFilter) {
+                //     url += `&${encodeURIComponent(API_CONFIG.departmentFilter)}`;
+                // }
+                // 临时移除部门过滤测试: WORKUNITDEPARTMENTNAME 字段可能在产出记录表中不存在
 
                 console.log('[查询] 请求URL:', url);
                 console.log('[查询] Token:', API_CONFIG.token);
@@ -1603,16 +1604,24 @@
                 });
 
                 const data = await response.json();
-                console.log('[查询] 响应:', JSON.stringify(data));
+                console.log('[产出记录] 完整响应:', JSON.stringify(data));
+                console.log('[产出记录] 字段分析:');
+                console.log('  - data.code:', data.code, typeof data.code);
+                console.log('  - data.res:', data.res, typeof data.res);
+                console.log('  - data.data:', data.data, data.data ? (Array.isArray(data.data) ? `数组(${data.data.length}条)` : typeof data.data) : null);
                 
                 // 支持 code=0 或 res=0 两种响应格式
                 const isSuccess = (data.code === 0 || data.code === '0' || data.res === 0);
                 if (isSuccess && data.data) {
                     console.log('获取到投入产出记录:', data.data.length, '条');
+                    console.log('[产出记录] 前3条数据:', JSON.stringify(data.data.slice(0, 3)));
                     return data.data;
                 } else if (data.res === '110' || data.code === '110' || data.code === 110) {
+                    console.log('[产出记录] Token无效，刷新中...');
                     await getAccessToken();
                     return fetchTasksInOut();
+                } else {
+                    console.log('[产出记录] 未匹配成功条件，data=', JSON.stringify(data).substring(0, 500));
                 }
                 return null;
             } catch (error) {
