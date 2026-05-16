@@ -1584,11 +1584,8 @@
                 let url = `${API_CONFIG.baseUrl}/ews3/tasksinout/reportES/ESsearch.do?page=1&limit=9999`;
                 url += `&SYS_MODIFY_DATE_searchtype=BT&SYS_MODIFY_DATE=${encodeURIComponent(startStr)}&SYS_MODIFY_DATE2=${encodeURIComponent(endStr)}`;
                 
-                // 添加部门过滤（如果需要可以启用）
-                // if (API_CONFIG.departmentFilter) {
-                //     url += `&${encodeURIComponent(API_CONFIG.departmentFilter)}`;
-                // }
-                // 临时移除部门过滤测试: WORKUNITDEPARTMENTNAME 字段可能在产出记录表中不存在
+                // 添加工作单元过滤 - 使用 WORKUNIT 字段
+                url += `&WORKUNIT=35527`;
 
                 console.log('[查询] 请求URL:', url);
                 console.log('[查询] Token:', API_CONFIG.token);
