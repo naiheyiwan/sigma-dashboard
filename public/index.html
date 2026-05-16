@@ -1553,7 +1553,9 @@
                 const response = await fetch(proxyUrl, { method: 'POST' });
                 const data = await response.json();
                 console.log('[Token] 响应:', JSON.stringify(data));
-                if (data.res === 0 && data.msg) {
+                // 支持 code=0 或 res=0 两种响应格式
+                const isSuccess = (data.code === 0 || data.code === '0' || data.res === 0);
+                if (isSuccess && data.msg) {
                     API_CONFIG.token = data.msg;
                     console.log('Token获取成功:', API_CONFIG.token);
                     return true;
@@ -1603,10 +1605,12 @@
                 const data = await response.json();
                 console.log('[查询] 响应:', JSON.stringify(data));
                 
-                if (data.res === 0 && data.data) {
+                // 支持 code=0 或 res=0 两种响应格式
+                const isSuccess = (data.code === 0 || data.code === '0' || data.res === 0);
+                if (isSuccess && data.data) {
                     console.log('获取到投入产出记录:', data.data.length, '条');
                     return data.data;
-                } else if (data.res === '110') {
+                } else if (data.res === '110' || data.code === '110' || data.code === 110) {
                     await getAccessToken();
                     return fetchTasksInOut();
                 }
@@ -2240,10 +2244,12 @@
                 const data = await response.json();
                 console.log('[派工任务] 响应:', JSON.stringify(data));
 
-                if (data.res === 0 && data.data) {
+                // 支持 code=0 或 res=0 两种响应格式
+                const isSuccess = (data.code === 0 || data.code === '0' || data.res === 0);
+                if (isSuccess && data.data) {
                     console.log('获取到派工任务记录:', data.data.length, '条');
                     return data.data;
-                } else if (data.res === '110') {
+                } else if (data.res === '110' || data.code === '110' || data.code === 110) {
                     await getAccessToken();
                     return fetchDispatchTasks();
                 }
@@ -3181,13 +3187,13 @@
 
                 const data = await response.json();
                 console.log('[产线异常] 响应:', JSON.stringify(data));
-                console.log('[产线异常] data.res:', data.res, 'data.data:', data.data);
 
-                if (data.res === 0 && data.data) {
+                // 支持 code=0 或 res=0 两种响应格式
+                const isSuccess = (data.code === 0 || data.code === '0' || data.res === 0);
+                if (isSuccess && data.data) {
                     console.log('获取到产线异常记录:', data.data.length, '条');
-                    console.log('[产线异常] 详细数据:', JSON.stringify(data.data));
                     return data.data;
-                } else if (data.res === '110') {
+                } else if (data.res === '110' || data.code === '110' || data.code === 110) {
                     await getAccessToken();
                     return fetchAlarmTasks();
                 }
