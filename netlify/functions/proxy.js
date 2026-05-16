@@ -26,6 +26,7 @@ exports.handler = async (event, context) => {
   
   console.log('[Proxy] Target URL:', targetUrl);
   console.log('[Proxy] Token:', token ? 'present' : 'missing');
+  console.log('[Proxy] HTTP Method:', event.httpMethod);
   
   if (!targetUrl || targetUrl === 'https://api.mingdao-info.com') {
     return {
@@ -39,23 +40,35 @@ exports.handler = async (event, context) => {
   }
   
   try {
-    const response = await fetch(targetUrl, {
+    // 构建 fetch 请求选项
+    const fetchOptions = {
       method: event.httpMethod || 'GET',
       headers: {
         'Content-Type': 'application/json',
         'token': token,
         'Accept': 'application/json'
       }
-    });
+    };
+    
+    // 如果是 POST/PUT 请求，转发 body
+    if (event.httpMethod === 'POST' || event.httpMethod === 'PUT') {
+      if (event.body) {
+        fetchOptions.body = event.body;
+        console.log('[Proxy] Request Body:', event.body);
+      }
+    }
+    
+    const response = await fetch(targetUrl, fetchOptions);
     
     const data = await response.text();
     console.log('[Proxy] Response status:', response.status);
+    console.log('[Proxy] Response body:', data.substring(0, 200));
     
     return {
       statusCode: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, token, Authorization',
         'Content-Type': 'application/json'
       },
