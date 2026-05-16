@@ -2,25 +2,23 @@
 // 解决明道云 API 的 CORS 问题
 
 exports.handler = async (event, context) => {
-  // 获取原始路径
-  let path = event.path.replace('/.netlify/functions/proxy', '');
-  
-  // 构建目标 URL
+  // 获取目标 URL（从查询参数中获取）
   let targetUrl;
-  if (path.startsWith('/https://')) {
-    // 已经是完整 URL
-    targetUrl = path.substring(1);
-  } else if (path.startsWith('https://')) {
-    targetUrl = path;
-  } else {
-    // 相对路径，添加 API 基础 URL
-    targetUrl = `https://api.mingdao-info.com${path}`;
-  }
   
-  // 如果有查询参数
-  if (event.queryStringParameters && Object.keys(event.queryStringParameters).length > 0) {
-    const params = new URLSearchParams(event.queryStringParameters);
-    targetUrl += (targetUrl.includes('?') ? '&' : '?') + params.toString();
+  if (event.queryStringParameters && event.queryStringParameters.url) {
+    // 从查询参数获取完整 URL
+    targetUrl = decodeURIComponent(event.queryStringParameters.url);
+  } else {
+    // 从路径获取（兼容旧方式）
+    let path = event.path.replace('/.netlify/functions/proxy', '');
+    
+    if (path.startsWith('/https://')) {
+      targetUrl = path.substring(1);
+    } else if (path.startsWith('https://')) {
+      targetUrl = path;
+    } else {
+      targetUrl = `https://api.mingdao-info.com${path}`;
+    }
   }
   
   // 获取 token
@@ -28,6 +26,17 @@ exports.handler = async (event, context) => {
   
   console.log('[Proxy] Target URL:', targetUrl);
   console.log('[Proxy] Token:', token ? 'present' : 'missing');
+  
+  if (!targetUrl || targetUrl === 'https://api.mingdao-info.com') {
+    return {
+      statusCode: 400,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ error: 'Missing url parameter' })
+    };
+  }
   
   try {
     const response = await fetch(targetUrl, {
@@ -56,6 +65,10 @@ exports.handler = async (event, context) => {
     console.error('[Proxy] Error:', error.message);
     return {
       statusCode: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ error: error.message })
     };
   }
